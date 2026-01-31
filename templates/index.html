@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Recommendation Engine</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="container">
+    <h1>LLM-Enhanced Recommendation System</h1>
+
+    <!-- Input Section -->
+    <div class="form-box">
+        <input type="text" id="customerId" placeholder="Customer ID (optional)">
+        <input type="text" id="query" placeholder="Enter query (e.g. gift for gamer friend)">
+        <button onclick="getRecommendations()">Get Recommendations</button>
+    </div>
+
+    <!-- Output Section -->
+    <div id="result"></div>
+</div>
+
+<script>
+function getRecommendations() {
+    const customerId = document.getElementById("customerId").value;
+    const query = document.getElementById("query").value;
+
+    fetch("/recommend", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            customer_id: customerId,
+            query: query
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        let html = "";
+
+        // LLM Profile Analysis
+        html += `<div class="section">
+                    <h2>LLM Profile Analysis</h2>
+                    <p>${data.analysis}</p>
+                 </div>`;
+
+        // User Profile
+        if (data.profile) {
+            html += `<div class="section">
+                        <h2>User Profile</h2>
+                        <p><b>Orders:</b> ${data.profile.orders}</p>
+                        <p><b>Total Spent:</b> ₹${data.profile.total_spent}</p>
+                        <p><b>Preference:</b> ${data.profile.preference}</p>
+                     </div>`;
+        } else {
+            html += `<div class="section">
+                        <h2>User Profile</h2>
+                        <p>New user detected. No purchase history available.</p>
+                     </div>`;
+        }
+
+        // Recommendations
+        html += `<div class="section">
+                    <h2>Top Recommendations</h2>
+                 </div>`;
+
+        data.recommendations.forEach((rec, index) => {
+            html += `
+                <div class="card">
+                    <h3>${index + 1}. ${rec.name}</h3>
+                    <p class="price">₹${rec.price}</p>
+
+                    <p><b>Why recommended:</b><br>${rec.why}</p>
+
+                    <p><b>Match reasons:</b></p>
+                    <ul>
+                        ${rec.matches.map(r => `<li>${r}</li>`).join("")}
+                    </ul>
+                </div>
+            `;
+        });
+
+        document.getElementById("result").innerHTML = html;
+    });
+}
+</script>
+
+</body>
+</html>
